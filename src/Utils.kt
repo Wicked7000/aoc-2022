@@ -2,10 +2,14 @@ import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
 
+fun checkWithMessage(actual: Any, expected: Any) {
+    check(actual == expected) { "expected $expected, but received $actual" }
+}
+
 /**
  * Reads lines from the given input txt file.
  */
-fun readInput(name: String) = File("src", "$name.txt")
+fun readInput(day: Int, name: String) = File("src/day$day/data", "$name.txt")
     .readLines()
 
 /**
