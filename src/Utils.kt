@@ -1,9 +1,19 @@
 import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
+import kotlin.system.measureNanoTime
+import kotlin.system.measureTimeMillis
 
 fun checkWithMessage(actual: Any, expected: Any) {
     check(actual == expected) { "expected $expected, but received $actual" }
+}
+
+fun runTimedPart(partNum: Int, part: (input: List<String>) -> Any, input: List<String>) {
+    val result: Any;
+    var elapsed = measureNanoTime {
+        result = part(input)
+    }
+    println("Part $partNum: $result (elapsed: ${elapsed/1e+6}ms)")
 }
 
 /**

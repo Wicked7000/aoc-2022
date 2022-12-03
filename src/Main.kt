@@ -10,7 +10,6 @@ fun main() {
             val dayInstance = dayKClass.getDeclaredConstructor().newInstance()
             val asDayInstance = dayInstance as? Day
             asDayInstance?.run()
-            break;
         } else {
             println("Day not recognised, please try another!")
         }

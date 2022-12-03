@@ -3,6 +3,7 @@ package day1
 import Day
 import checkWithMessage
 import readInput
+import runTimedPart
 
 @Suppress("unused")
 class Day1(): Day() {
@@ -66,13 +67,11 @@ class Day1(): Day() {
         val testResult1 = part1(testInput)
         checkWithMessage(testResult1, 24000L)
 
-        val p1Result = part1(p1Input)
-        println("Part 1: $p1Result")
+        runTimedPart(1, { part1(it) }, p1Input)
 
         val testResult2 = part2(testInput)
         checkWithMessage(testResult2,45000L)
 
-        val p2Result = part2(p1Input)
-        println("Part 2: $p2Result")
+        runTimedPart(2, { part2(it) }, p1Input)
     }
 }

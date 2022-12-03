@@ -11,3 +11,4 @@ Feel free to give suggestions on solutions you see here as I'm new to learning K
 | ----------- | ----------- |
 | 1      | ⭐⭐       |
 | 2   | ⭐⭐        |
+ | 3   | ⭐⭐       |

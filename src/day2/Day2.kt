@@ -4,6 +4,7 @@ import Day
 import checkWithMessage
 import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match
 import readInput
+import runTimedPart
 
 @Suppress("unused")
 class Day2(): Day() {
@@ -132,14 +133,12 @@ class Day2(): Day() {
         val testResult1 = part1(testData)
         checkWithMessage(testResult1, 15)
 
-        val p1Result = part1(inputData)
-        println("Part 1: $p1Result")
+        runTimedPart(1, { part1(it) }, inputData)
 
         val testResult2 = part2(testData)
         checkWithMessage(testResult2, 12)
 
-        val p2Result = part2(inputData)
-        println("Part 2: $p2Result")
+        runTimedPart(2, { part2(it) }, inputData)
     }
 }
 
