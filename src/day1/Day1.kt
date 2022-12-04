@@ -13,7 +13,7 @@ class Day1(): Day() {
         return input
     }
 
-    fun part1(input: List<String>): Long {
+    private fun part1(input: List<String>): Long {
         var currentBufferAmount = 0L;
         var currentMaxCalories = Long.MIN_VALUE;
         for(idx in input.indices){
@@ -32,9 +32,9 @@ class Day1(): Day() {
         return currentMaxCalories
     }
 
-    fun part2(input: List<String>): Long {
+    private fun part2(input: List<String>): Long {
         var currentBufferAmount = 0L;
-        var currentTopThree = MutableList(3) { _: Int -> Long.MIN_VALUE }
+        val currentTopThree = MutableList(3) { _: Int -> Long.MIN_VALUE }
         for(idx in input.indices){
             val item = input[idx]
             if(item.isEmpty()){

@@ -7,8 +7,7 @@ import runTimedPart
 
 @Suppress("unused")
 class Day3(): Day() {
-
-    fun getItemPriority(item: Char): Int {
+    private fun getItemPriority(item: Char): Int {
         var score = item.code
         if(score >= 97){
             //Lowercase
@@ -21,7 +20,7 @@ class Day3(): Day() {
 
     data class Rucksack(val firstCompartment: Set<Char>, val secondCompartment: Set<Char>)
 
-    fun part1(input: List<String>): Int {
+    private fun part1(input: List<String>): Int {
         var totalPriorities = 0
         for(line in input){
             val firstHalf = mutableSetOf<Char>()
@@ -46,7 +45,7 @@ class Day3(): Day() {
         return totalPriorities;
     }
 
-    fun part2(input: List<String>): Int {
+    private fun part2(input: List<String>): Int {
         var totalPriorities = 0
         val groups = input.chunked(3)
         for(groupIdx in groups.indices){

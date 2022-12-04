@@ -92,7 +92,7 @@ class Day2(): Day() {
         return totalScore;
     }
 
-    fun part1(input: List<String>): Int {
+    private fun part1(input: List<String>): Int {
         val parsedInput = mutableListOf<MatchUp>()
         for(item in input){
             val (a, b) = item.split(" ");
@@ -102,7 +102,7 @@ class Day2(): Day() {
         return tallyScoreForMatchUps(parsedInput);
     }
 
-    fun part2(input: List<String>): Int {
+    private fun part2(input: List<String>): Int {
         val parsedInput = mutableListOf<MatchUp>()
         for(item in input){
             val (a, b) = item.split(" ");
