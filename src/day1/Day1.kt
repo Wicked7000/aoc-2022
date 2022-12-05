@@ -62,7 +62,7 @@ class Day1(): Day() {
 
     override fun run(){
         val testInput = getCorrectedInput("test")
-        val p1Input = getCorrectedInput("input1")
+        val p1Input = getCorrectedInput("input")
 
         val testResult1 = part1(testInput)
         checkWithMessage(testResult1, 24000L)

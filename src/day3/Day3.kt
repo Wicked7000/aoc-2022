@@ -66,7 +66,7 @@ class Day3(): Day() {
 
     override fun run(){
         val testData = readInput(3,"test")
-        val inputData = readInput(3, "input1")
+        val inputData = readInput(3, "input")
 
         val testResult1 = part1(testData)
         checkWithMessage(testResult1, 157)

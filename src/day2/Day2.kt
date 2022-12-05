@@ -2,7 +2,6 @@ package day2
 
 import Day
 import checkWithMessage
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match
 import readInput
 import runTimedPart
 
@@ -128,7 +127,7 @@ class Day2(): Day() {
 
     override fun run(){
         val testData = readInput(2,"test")
-        val inputData = readInput(2, "input1")
+        val inputData = readInput(2, "input")
 
         val testResult1 = part1(testData)
         checkWithMessage(testResult1, 15)

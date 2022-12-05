@@ -6,6 +6,13 @@ The main differences being in how files are organised and called, allowing for a
 
 Feel free to give suggestions on solutions you see here as I'm new to learning Kotlin and have likely missed out on some cool features!
 
+## Boilerplate creation
+The packages along with the class files with setup text files for input and test data can be created by running the below gradle command
+```
+./gradlew generateDay -Pday=?
+```
+where you replace the `?` with the day you want to generate the boilerplate for.
+
 ## Days Completed
 | Day         | Completed |
 | ----------- | ----------- |
@@ -13,3 +20,4 @@ Feel free to give suggestions on solutions you see here as I'm new to learning K
 | 2   | ⭐⭐        |
  | 3   | ⭐⭐       |
  | 4   | ⭐⭐       |
+ | 5   | ⭐⭐       |
