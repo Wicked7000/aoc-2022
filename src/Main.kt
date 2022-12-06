@@ -9,7 +9,16 @@ fun main() {
             val dayKClass = Class.forName("day$day.Day$day");
             val dayInstance = dayKClass.getDeclaredConstructor().newInstance()
             val asDayInstance = dayInstance as? Day
-            asDayInstance?.run()
+
+            try {
+                asDayInstance?.run()
+            } catch (e: Exception){
+                println("Exception occurred while running day $day")
+                e.printStackTrace()
+            } catch (e: Error) {
+                println("Error (usually test failure) occurred while running day: $day")
+                e.printStackTrace()
+            }
         } else {
             println("Day not recognised, please try another!")
         }

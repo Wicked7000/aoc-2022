@@ -23,7 +23,6 @@ fun stripRedundantTypeInformation(day: Int){
             .replace(": Unit", ""))
         previousLine = lines[lineIdx]
     }
-    println(resultLines.toString())
 
     File("./src/day$day/Day$day.kt").writeText(resultLines.joinToString("\n"))
 }
