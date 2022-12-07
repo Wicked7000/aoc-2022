@@ -1,11 +1,13 @@
+import com.squareup.kotlinpoet.typeNameOf
 import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
+import kotlin.reflect.typeOf
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
 
 fun checkWithMessage(actual: Any, expected: Any) {
-    check(actual == expected) { "expected $expected, but received $actual" }
+    check(actual == expected) { "expected $expected (${expected::class.simpleName}), but received $actual (${actual::class.simpleName})" }
 }
 
 fun runTimedPart(partNum: Int, part: (input: List<String>) -> Any, input: List<String>) {
