@@ -14,12 +14,13 @@ The below script will setup the class,package and input files for the day specif
 where you replace the `?` with the day you want to generate the boilerplate for.
 
 ## Days Completed
-| Day         | Completed |
-| ----------- | ----------- |
-| 1      | ⭐⭐       |
+| Day | Completed |
+|-----| ----------- |
+| 1   | ⭐⭐       |
 | 2   | ⭐⭐        |
  | 3   | ⭐⭐       |
  | 4   | ⭐⭐       |
  | 5   | ⭐⭐       |
  | 6   | ⭐⭐       |
  | 7   | ⭐⭐       |
+ | 8   | ⭐⭐       |
