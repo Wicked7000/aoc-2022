@@ -15,12 +15,13 @@ where you replace the `?` with the day you want to generate the boilerplate for.
 
 ## Days Completed
 | Day | Completed |
-|-----| ----------- |
-| 1   | ⭐⭐       |
+|-----|-----------|
+| 1   | ⭐⭐        |
 | 2   | ⭐⭐        |
- | 3   | ⭐⭐       |
- | 4   | ⭐⭐       |
- | 5   | ⭐⭐       |
- | 6   | ⭐⭐       |
- | 7   | ⭐⭐       |
- | 8   | ⭐⭐       |
+ | 3   | ⭐⭐        |
+ | 4   | ⭐⭐        |
+ | 5   | ⭐⭐        |
+ | 6   | ⭐⭐        |
+ | 7   | ⭐⭐        |
+ | 8   | ⭐⭐        |
+ | 9   | ⭐⭐        |
