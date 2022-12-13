@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "1.7.22"
 }
@@ -8,12 +10,19 @@ repositories {
 
 dependencies {
     implementation("com.squareup:kotlinpoet:1.12.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(kotlin("test"))
+    implementation(kotlin("reflect"))
 }
 
 tasks {
     sourceSets {
         main {
-            java.srcDirs("src")
+            kotlin.srcDirs("src/main/kotlin")
+        }
+        test {
+            kotlin.srcDirs("src/test/kotlin")
         }
     }
 
@@ -21,6 +30,10 @@ tasks {
         gradleVersion = "7.6"
     }
 
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.register("generateDay") {
@@ -41,3 +54,11 @@ tasks.register("generateDay") {
     }
 }
 
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "1.8"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "1.8"
+}

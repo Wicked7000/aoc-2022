@@ -2,8 +2,11 @@ package day2
 
 import Day
 import checkWithMessage
+import parserCombinators.*
 import readInput
+import readInputString
 import runTimedPart
+import kotlin.sequences.sequenceOf
 
 @Suppress("unused")
 class Day2(): Day() {
@@ -39,12 +42,13 @@ class Day2(): Day() {
             }
         }
     }
+
     enum class Action(val action: Char, val altAction: Char, val score: Int) {
         ROCK('A', 'X', 1),
         PAPER('B', 'Y', 2),
         SCISSORS('C', 'Z', 3);
 
-        companion object {
+        companion object: ParsableEnum<Action> {
             fun getEnum(value: String): Action {
                 if(value.length > 1){
                     throw Error("Supplied string is too long $value")
@@ -58,9 +62,14 @@ class Day2(): Day() {
                 }
                 throw Error("Could not match supplied character $value")
             }
+
+            override fun toMap(): Map<String, Action> {
+                val firstMap = enumValues<Action>().associateBy { ""+it.action }
+                val secondMap = enumValues<Action>().associateBy { ""+it.altAction }
+                return firstMap + secondMap
+            }
         }
     }
-
     private fun getMatchUpResult(matchUp: MatchUp): MatchUpResult {
         return if(matchUp.opponentAction == matchUp.strategyAction){
             MatchUpResult.DRAW
@@ -72,11 +81,9 @@ class Day2(): Day() {
     }
 
     data class MatchUp(val opponentAction: Action, val strategyAction: Action)
-
     private fun actionPairToString(first: Action, second: Action): String {
         return "$first-$second";
     }
-
     private fun tallyScoreForMatchUps(input: List<MatchUp>): Int {
         var totalScore = 0
         for(matchUp in input){
@@ -91,22 +98,45 @@ class Day2(): Day() {
         return totalScore;
     }
 
-    private fun part1(input: List<String>): Int {
-        val parsedInput = mutableListOf<MatchUp>()
-        for(item in input){
-            val (a, b) = item.split(" ");
-            parsedInput.add(MatchUp(Action.getEnum(a), Action.getEnum(b)))
+    private fun parseInput(input: String): List<MatchUp> {
+        val parseTree = parseTillEnd(toClass(parserCombinators.sequenceOf(enum(Action), space(), enum(Action), optional(newLine())), MatchUp::class))
+        val result = parseTree(BaseParser(input))
+        if(result.hasError){
+            throw Error(result.error)
         }
 
-        return tallyScoreForMatchUps(parsedInput);
+        @Suppress("UNCHECKED_CAST")
+        return result.results.toList() as List<MatchUp>
     }
 
-    private fun part2(input: List<String>): Int {
-        val parsedInput = mutableListOf<MatchUp>()
-        for(item in input){
-            val (a, b) = item.split(" ");
-            val opponentAction = Action.getEnum(a)
-            val strategyAction: Action = when (MatchUpResult.getEnum(b)) {
+    private fun parseInputP2(input: String): List<MatchUp> {
+        val parseTree = parseTillEnd(toClass(parserCombinators.sequenceOf(enum(Action), space(), strategyAction(), optional(newLine())), MatchUp::class))
+        val result = parseTree(BaseParser(input))
+        if(result.hasError){
+            throw Error(result.error)
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return result.results.toList() as List<MatchUp>
+    }
+
+    private fun strategyAction(): ParserFn {
+        return newParser({ parser ->
+            val newParser = anyLetter()(parser)
+            newParser.lastParserName = "strategyAction(${newParser.lastParserName})"
+            if(newParser.hasError){
+                return@newParser newParser
+            }
+
+            val enumResult = newParser.popLast()
+            val opponentAction = newParser.popLast()
+
+            if(opponentAction !is Action){
+                newParser.error = "Expected result of type Action but got: ${opponentAction::class.simpleName}"
+                return@newParser newParser
+            }
+
+            val newResult = when (MatchUpResult.getEnum(""+enumResult as Char)) {
                 MatchUpResult.DRAW -> {
                     opponentAction
                 }
@@ -119,15 +149,26 @@ class Day2(): Day() {
                     losingMatchUps[opponentAction]!!
                 }
             }
+            newParser.results.add(opponentAction)
+            newParser.results.add(newResult)
 
-            parsedInput.add(MatchUp(opponentAction, strategyAction))
-        }
+            return@newParser newParser
+        }, "strategyAction(?)")
+    }
+
+    private fun part1(input: String): Int {
+        val parsedInput = parseInput(input)
+        return tallyScoreForMatchUps(parsedInput);
+    }
+
+    private fun part2(input: String): Int {
+        val parsedInput = parseInputP2(input)
         return tallyScoreForMatchUps(parsedInput);
     }
 
     override fun run(){
-        val testData = readInput(2,"test")
-        val inputData = readInput(2, "input")
+        val testData = readInputString(2,"test")
+        val inputData = readInputString(2, "input")
 
         val testResult1 = part1(testData)
         checkWithMessage(testResult1, 15)

@@ -10,9 +10,11 @@ fun checkWithMessage(actual: Any, expected: Any) {
     check(actual == expected) { "expected $expected (${expected::class.simpleName}), but received $actual (${actual::class.simpleName})" }
 }
 
-fun runTimedPart(partNum: Int, part: (input: List<String>) -> Any, input: List<String>) {
+
+
+fun <T> runTimedPart(partNum: Int, part: (input: T) -> Any, input: T) {
     val result: Any;
-    var elapsed = measureNanoTime {
+    val elapsed = measureNanoTime {
         result = part(input)
     }
     println("Part $partNum: $result (elapsed: ${elapsed/1e+6}ms)")
@@ -21,8 +23,10 @@ fun runTimedPart(partNum: Int, part: (input: List<String>) -> Any, input: List<S
 /**
  * Reads lines from the given input txt file.
  */
-fun readInput(day: Int, name: String) = File("src/day$day/data", "$name.txt")
+fun readInput(day: Int, name: String) = File("src/main/kotlin/day$day/data", "$name.txt")
     .readLines()
+
+fun readInputString(day: Int, name: String) = File("src/main/kotlin/day$day/data", "$name.txt").readText()
 
 /**
  * Converts string to md5 hash.

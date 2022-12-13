@@ -4,7 +4,7 @@ fun main() {
     while(true){
         println("Please enter the number of the day to Run: ")
         val day = readln().toInt();
-        val dayFile = File("./src/day$day/Day$day.kt")
+        val dayFile = File("./src/main/kotlin/day$day/Day$day.kt")
         if (dayFile.exists()) {
             val dayKClass = Class.forName("day$day.Day$day");
             val dayInstance = dayKClass.getDeclaredConstructor().newInstance()
