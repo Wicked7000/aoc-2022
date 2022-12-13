@@ -4,8 +4,11 @@ import com.squareup.kotlinpoet.asTypeName
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.full.isSupertypeOf
 import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.typeOf
 
 typealias ParserFn = (BaseParser) -> BaseParser
 
@@ -85,7 +88,7 @@ fun optional(parserFn: ParserFn): ParserFn {
             state.lastParserName = functionName
             return@newParser state
         }
-    }, "optional()")
+    }, "optional(?)")
 }
 
 fun <T : Number> number(size: KClass<T>): ParserFn {
@@ -304,7 +307,7 @@ fun toClass(innerParse: ParserFn, instanceClass: KClass<*>): ParserFn {
         }
 
         for(paramIdx in modifiedConstructorParams.indices){
-            if(!modifiedConstructorParams[paramIdx].type.isSupertypeOf(resultArgs?.get(paramIdx)!!::class.createType())){
+            if(!(modifiedConstructorParams[paramIdx].type.classifier as KClass<*>).isSuperclassOf(resultArgs[paramIdx]::class)){
                 return Pair(false, "Expected parameter of type ${modifiedConstructorParams[paramIdx].type.asTypeName()} but got: ${resultArgs[paramIdx]::class.simpleName}")
             }
         }
@@ -387,6 +390,54 @@ fun anyLengthString(): ParserFn {
         }
         currentParser
     }, "anyLengthString()")
+}
+
+fun list(parserFn: ParserFn): ParserFn {
+    return newParser({parser ->
+        val currentMaxIndex = parser.results.lastIndex
+        val newParser = parserFn(parser)
+        newParser.lastParserName = "list(${newParser.lastParserName})"
+        if(newParser.hasError){
+            return@newParser newParser
+        }
+
+        val currentIndex = newParser.results.lastIndex
+        if(currentIndex == currentMaxIndex){
+            newParser.error = "No elements found for list, expected more than 0"
+            return@newParser newParser
+        }
+
+        if(currentMaxIndex >= 0){
+            val items = newParser.results.subList(currentMaxIndex+1, newParser.results.size).toMutableList()
+            val keepItems = newParser.results.slice(0 .. currentMaxIndex)
+            newParser.results.clear()
+            newParser.results.addAll(keepItems)
+            newParser.results.add(items)
+        } else {
+            val items = newParser.results.toMutableList()
+            newParser.results.clear()
+            newParser.results.add(items)
+        }
+
+        return@newParser newParser
+    }, "list(?)")
+}
+
+fun repeat(times: Int, parserFn: ParserFn): ParserFn {
+    return newParser({ parser ->
+        var currentParser = parser
+        for(idx in 0 until times){
+            currentParser = parserFn(currentParser)
+            if(currentParser.hasError){
+                currentParser.lastParserName = "repeat($times, ${currentParser.lastParserName})"
+                currentParser.error = "Error occurred on iteration $idx: ${currentParser.error}"
+                return@newParser currentParser
+            }
+        }
+
+        currentParser.lastParserName = "repeat($times, ${currentParser.lastParserName})"
+        return@newParser currentParser
+    }, "repeat($times, ?)")
 }
 
 fun string(toMatch: String, shouldCapture: Boolean = true): ParserFn {

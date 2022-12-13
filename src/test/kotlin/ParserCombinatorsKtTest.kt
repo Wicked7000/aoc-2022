@@ -255,7 +255,6 @@ class ParserCombinatorsKtTest {
             val parser = oneOf(anyLetter(), anyLetter())
             val resultOne = parser(input1)
             assertEquals("oneOf(anyLetter(), anyLetter())", resultOne.lastParserName)
-            assertEquals('a', resultOne.results[0])
             assertEquals(true, resultOne.hasNext)
             assertEquals(true, resultOne.hasError)
             assertEquals("Expected only one parser to match but received: anyLetter(), anyLetter()", resultOne.error)
@@ -503,7 +502,7 @@ class ParserCombinatorsKtTest {
             val parser = oneOrMoreTimes(group(sequenceOf(anyLetter(), char('+'), anyLetter())))
             val resultOne = parser(input1)
             assertEquals("oneOrMoreTimes(group(sequenceOf(anyLetter(), char(+), anyLetter())))", resultOne.lastParserName)
-            assertEquals(listOf(listOf('a', '+', 'b'), listOf('z', '+')), resultOne.results)
+            assertEquals(listOf(listOf('a', '+', 'b')), resultOne.results)
             assertEquals(true, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
             assertEquals(null, resultOne.error)
@@ -591,7 +590,8 @@ class ParserCombinatorsKtTest {
         }
     }
 
-    data class StringIntClass(val firstString: String = "", val num: Int = 0)
+    data class StringIntClass(val firstString: String, val num: Int)
+    data class StringIntOptionalClass(val firstString: String = "", val num: Int)
 
     @Nested
     @DisplayName("toClass()")
@@ -618,7 +618,7 @@ class ParserCombinatorsKtTest {
             assertEquals("toClass(StringIntClass, sequenceOf(number(Int), space(), anyLengthString()))", resultOne.lastParserName)
             assertEquals(false, resultOne.hasNext)
             assertEquals(true, resultOne.hasError)
-            assertEquals("Expected parameter of type kotlin.String but got: Int", resultOne.error)
+            assertEquals("Unable to match needed constructor arguments: (Optional: Expected parameter of type kotlin.String but got: Int, Without Optional: Expected parameter of type kotlin.String but got: Int)", resultOne.error)
         }
 
         @Test
@@ -630,7 +630,143 @@ class ParserCombinatorsKtTest {
             assertEquals("toClass(StringIntClass, sequenceOf(number(Int)))", resultOne.lastParserName)
             assertEquals(false, resultOne.hasNext)
             assertEquals(true, resultOne.hasError)
-            assertEquals("Expected parser results to contain 2 results but contained: 1", resultOne.error)
+            assertEquals("Unable to match needed constructor arguments: (Optional: Expected result args but got: null, Without Optional: Expected result args but got: null)", resultOne.error)
+        }
+
+        @Test
+        fun shouldParseOptionalClasses(){
+            val input1 = BaseParser("10")
+
+            val parser = toClass(sequenceOf(number(Int::class)), StringIntOptionalClass::class)
+            val resultOne = parser(input1)
+            assertEquals("toClass(StringIntOptionalClass, sequenceOf(number(Int)))", resultOne.lastParserName)
+            assertEquals(listOf(StringIntOptionalClass(num = 10)),resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+        }
+
+        @Test
+        fun shouldFailIfTypeIsIncorrectForOptional(){
+            val input1 = BaseParser("hello")
+
+            val parser = toClass(anyLengthString(), StringIntOptionalClass::class)
+            val resultOne = parser(input1)
+            assertEquals("toClass(StringIntOptionalClass, anyLengthString())", resultOne.lastParserName)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(true, resultOne.hasError)
+            assertEquals("Unable to match needed constructor arguments: (Optional: Expected result args but got: null, Without Optional: Expected parameter of type kotlin.Int but got: String)", resultOne.error)
+        }
+    }
+
+    @Nested
+    @DisplayName("list()")
+    inner class ListParser() {
+        @Test
+        fun shouldParseLists(){
+            val input1 = BaseParser("a, b, c, hello")
+
+            val parser = parseTillEnd(
+                sequenceOf(
+                    list(
+                        oneOrMoreTimes(
+                            sequenceOf(
+                                anyLetter(),
+                                sequenceOf(char(',', false), space())
+                            )
+                        )
+                    ),
+                    string("hello")
+                )
+            )
+            val resultOne = parser(input1)
+            assertEquals("parseTillEnd(sequenceOf(list(oneOrMoreTimes(sequenceOf(anyLetter(), sequenceOf(char(,), space())))), string(hello)))", resultOne.lastParserName)
+            assertEquals(listOf(listOf('a', 'b', 'c'), "hello"), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+            assertEquals(null, resultOne.error)
+        }
+
+        @Test
+        fun shouldParseListsBetween(){
+            val input1 = BaseParser("hello a a, b, c")
+
+            val parser = parseTillEnd(
+                sequenceOf(
+                    string("hello"),
+                    space(),
+                    anyLetter(),
+                    space(),
+                    list(
+                        oneOrMoreTimes(
+                            sequenceOf(
+                                anyLetter(),
+                                optional(
+                                    sequenceOf(
+                                        char(',', shouldCapture = false),
+                                        space()
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            val resultOne = parser(input1)
+            assertEquals("parseTillEnd(sequenceOf(string(hello), space(), anyLetter(), space(), list(oneOrMoreTimes(sequenceOf(anyLetter(), optional(sequenceOf(char(,), space())))))))", resultOne.lastParserName)
+            assertEquals(listOf("hello", 'a', listOf('a', 'b', 'c')), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+            assertEquals(null, resultOne.error)
+        }
+
+        @Test
+        fun shouldShortCircuitOnError(){
+            val input1 = BaseParser("hello wold")
+
+            val parser = sequenceOf(
+                list(
+                    sequenceOf(
+                        string("hello"),
+                        string("world")
+                    )
+                )
+            )
+            val resultOne = parser(input1)
+            assertEquals("sequenceOf(list(sequenceOf(string(hello), string(world))))", resultOne.lastParserName)
+            assertEquals(listOf("hello"), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(true, resultOne.hasError)
+            assertEquals("Expected 'world' but received ' wold'", resultOne.error)
+        }
+    }
+
+    @Nested
+    @DisplayName("repeat()")
+    inner class RepeatParser() {
+        @Test
+        fun shouldRepeatCorrectNumberOfTimes(){
+            val input1 = BaseParser("abc")
+
+            val parser = repeat(3, anyLetter())
+            val resultOne = parser(input1)
+            assertEquals("repeat(3, anyLetter())", resultOne.lastParserName)
+            assertEquals(listOf('a', 'b', 'c'), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+            assertEquals(null, resultOne.error)
+        }
+
+        @Test
+        fun shouldShortCircuitOnError(){
+            val input1 = BaseParser("ab1")
+
+            val parser = repeat(3, anyLetter())
+            val resultOne = parser(input1)
+            assertEquals("repeat(3, anyLetter())", resultOne.lastParserName)
+            assertEquals(listOf('a', 'b'), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(true, resultOne.hasError)
+            assertEquals("Error occurred on iteration 2: Expected letter but received '1'", resultOne.error)
         }
     }
 }
