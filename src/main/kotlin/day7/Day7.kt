@@ -98,7 +98,7 @@ class Day7 : Day() {
           oneOrMoreTimes(
             group(
               sequenceOf(
-                oneOf(string("dir"), numberLong()),
+                oneOf(string("dir"), number(Long::class)),
                 space(),
                 anyLengthString(),
                 optional(newLine())

@@ -62,8 +62,8 @@ open class BaseParser(
     fun copy(
         input: String = this.input,
         index: Int = this.index,
-        context: MutableMap<String, Any> = this.context,
-        results: MutableList<Any> = this.results,
+        context: MutableMap<String, Any> = this.context.toMutableMap(),
+        results: MutableList<Any> = this.results.toMutableList(),
         lastParserName: String = this.lastParserName,
         error: String? = this.error,
         warning: String? = this.warning

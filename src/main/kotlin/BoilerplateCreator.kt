@@ -7,7 +7,7 @@ import kotlin.io.path.Path
 const val REMOVE_THIS_LINE = "//REMOVE_THIS_LINE_COMMENT"
 
 fun stripRedundantTypeInformation(day: Int){
-    val lines = File("./src/day$day/Day$day.kt").readLines().toMutableList()
+    val lines = File("./src/main/kotlin/day$day/Day$day.kt").readLines().toMutableList()
     var previousLine = ""
 
     val resultLines = mutableListOf<String>()
@@ -24,7 +24,7 @@ fun stripRedundantTypeInformation(day: Int){
         previousLine = lines[lineIdx]
     }
 
-    File("./src/day$day/Day$day.kt").writeText(resultLines.joinToString("\n"))
+    File("./src/main/kotlin/day$day/Day$day.kt").writeText(resultLines.joinToString("\n"))
 }
 fun main(args: Array<String>) {
     val day = args[0].toInt()
@@ -77,11 +77,11 @@ fun main(args: Array<String>) {
                 )
                 .build()
         ).build()
-    if(!Files.exists(Path("./src/day$day/Day$day.kt"))){
-        dayFile.writeTo(File("./src"))
-        Files.createDirectories(Path("./src/day$day/data"))
-        Files.createFile(Path("./src/day$day/data/test.txt"))
-        Files.createFile(Path("./src/day$day/data/input.txt"))
+    if(!Files.exists(Path("./src/main/kotlin/day$day/Day$day.kt"))){
+        dayFile.writeTo(File("./src/main/kotlin"))
+        Files.createDirectories(Path("./src/main/kotlin/day$day/data"))
+        Files.createFile(Path("./src/main/kotlin/day$day/data/test.txt"))
+        Files.createFile(Path("./src/main/kotlin/day$day/data/input.txt"))
         stripRedundantTypeInformation(day)
         println("Class file for day $day created!")
     } else {

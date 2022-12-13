@@ -55,7 +55,7 @@ class ParserCombinatorsKtTest {
             assertEquals("newLine()", result.lastParserName)
             assertEquals(false, result.hasNext)
             assertEquals(true, result.hasError)
-            assertEquals("Expected '\\n' but received '\r'", result.error)
+            assertEquals("Expected '\\n' but received 'null'", result.error)
         }
     }
 
@@ -304,15 +304,15 @@ class ParserCombinatorsKtTest {
     }
 
     @Nested
-    @DisplayName("numberInt()")
-    inner class NumberInt() {
+    @DisplayName("number()")
+    inner class Number() {
         @Test
         fun shouldPass(){
             val input1 = BaseParser("10+523+3")
 
-            val parser = sequenceOf(numberInt(), char('+'), numberInt(), char('+'), numberInt())
+            val parser = sequenceOf(number(Int::class), char('+'), number(Int::class), char('+'), number(Int::class))
             val resultOne = parser(input1)
-            assertEquals("sequenceOf(numberInt(), char(+), numberInt(), char(+), numberInt())", resultOne.lastParserName)
+            assertEquals("sequenceOf(number(Int), char(+), number(Int), char(+), number(Int))", resultOne.lastParserName)
             assertEquals(listOf(10, '+', 523, '+', 3), resultOne.results)
             assertEquals(false, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
@@ -320,12 +320,73 @@ class ParserCombinatorsKtTest {
         }
 
         @Test
+        fun shouldParseNegative(){
+            val input1 = BaseParser("-10+-523")
+
+            val parser = sequenceOf(number(Int::class), char('+'), number(Int::class))
+            val resultOne = parser(input1)
+            assertEquals("sequenceOf(number(Int), char(+), number(Int))", resultOne.lastParserName)
+            assertEquals(listOf(-10, '+', -523), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+            assertEquals(null, resultOne.error)
+        }
+
+        @Test
+        fun shouldFailWithDot(){
+            val input1 = BaseParser(".")
+
+            val parser = sequenceOf(number(Int::class))
+            val resultOne = parser(input1)
+            assertEquals("sequenceOf(number(Int))", resultOne.lastParserName)
+            assertEquals(true, resultOne.hasNext)
+            assertEquals(true, resultOne.hasError)
+            assertEquals("Expected number but got '.'", resultOne.error)
+        }
+
+        @Test
+        fun shouldParseLong(){
+            val input1 = BaseParser((1L + Int.MAX_VALUE).toString())
+
+            val parser = number(Long::class)
+            val resultOne = parser(input1)
+            assertEquals("number(Long)", resultOne.lastParserName)
+            assertEquals(listOf(1L + Int.MAX_VALUE), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+        }
+
+        @Test
+        fun shouldParseDouble(){
+            val input1 = BaseParser("1.5")
+
+            val parser = number(Double::class)
+            val resultOne = parser(input1)
+            assertEquals("number(Double)", resultOne.lastParserName)
+            assertEquals(listOf(1.5), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+        }
+
+        @Test
+        fun shouldParseNegativeDouble(){
+            val input1 = BaseParser("-1.5")
+
+            val parser = number(Double::class)
+            val resultOne = parser(input1)
+            assertEquals("number(Double)", resultOne.lastParserName)
+            assertEquals(listOf(-1.5), resultOne.results)
+            assertEquals(false, resultOne.hasNext)
+            assertEquals(false, resultOne.hasError)
+        }
+
+        @Test
         fun shouldFailIfNoDigitCharacterFound(){
             val input1 = BaseParser("ab+10")
 
-            val parser = sequenceOf(numberInt(), char('+'), numberInt(), char('+'), numberInt())
+            val parser = sequenceOf(number(Int::class), char('+'), number(Int::class), char('+'), number(Int::class))
             val resultOne = parser(input1)
-            assertEquals("sequenceOf(numberInt(), char(+), numberInt(), char(+), numberInt())", resultOne.lastParserName)
+            assertEquals("sequenceOf(number(Int), char(+), number(Int), char(+), number(Int))", resultOne.lastParserName)
             assertEquals(true, resultOne.hasNext)
             assertEquals(true, resultOne.hasError)
             assertEquals("Expected number but got 'a'", resultOne.error)
@@ -339,9 +400,9 @@ class ParserCombinatorsKtTest {
         fun shouldParseTillEnd(){
             val input1 = BaseParser("10 15 20 25 30 35 40 45 50 ")
 
-            val parser = parseTillEnd(sequenceOf(numberInt(), space()))
+            val parser = parseTillEnd(sequenceOf(number(Int::class), space()))
             val resultOne = parser(input1)
-            assertEquals("parseTillEnd(sequenceOf(numberInt(), space()))", resultOne.lastParserName)
+            assertEquals("parseTillEnd(sequenceOf(number(Int), space()))", resultOne.lastParserName)
             assertEquals(listOf(10, 15, 20, 25, 30, 35, 40, 45, 50), resultOne.results)
             assertEquals(false, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
@@ -352,9 +413,9 @@ class ParserCombinatorsKtTest {
         fun shouldErrorIfNoMovementBetweenIteration(){
             val input1 = BaseParser("100 100  ")
 
-            val parser = parseTillEnd(oneOrMoreTimes(sequenceOf(numberInt(), space())))
+            val parser = parseTillEnd(oneOrMoreTimes(sequenceOf(number(Int::class), space())))
             val resultOne = parser(input1)
-            assertEquals("parseTillEnd(oneOrMoreTimes(sequenceOf(numberInt(), space())))", resultOne.lastParserName)
+            assertEquals("parseTillEnd(oneOrMoreTimes(sequenceOf(number(Int), space())))", resultOne.lastParserName)
             assertEquals(listOf(100, 100), resultOne.results)
             assertEquals(true, resultOne.hasNext)
             assertEquals(true, resultOne.hasError)
@@ -365,9 +426,9 @@ class ParserCombinatorsKtTest {
         fun shouldFailIfSubParserFails(){
             val input1 = BaseParser("10 15 20 25 30 35 40 45 50 ")
 
-            val parser = parseTillEnd(sequenceOf(numberInt(), space()))
+            val parser = parseTillEnd(sequenceOf(number(Int::class), space()))
             val resultOne = parser(input1)
-            assertEquals("parseTillEnd(sequenceOf(numberInt(), space()))", resultOne.lastParserName)
+            assertEquals("parseTillEnd(sequenceOf(number(Int), space()))", resultOne.lastParserName)
             assertEquals(listOf(10, 15, 20, 25, 30, 35, 40, 45, 50), resultOne.results)
             assertEquals(false, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
@@ -382,9 +443,9 @@ class ParserCombinatorsKtTest {
         fun shouldParseUntilFailure(){
             val input1 = BaseParser("10 15 20 25 30 35 40 45 50 hello world!")
 
-            val parser = sequenceOf(oneOrMoreTimes(sequenceOf(numberInt(), space())), string("hello world!"))
+            val parser = sequenceOf(oneOrMoreTimes(sequenceOf(number(Int::class), space())), string("hello world!"))
             val resultOne = parser(input1)
-            assertEquals("sequenceOf(oneOrMoreTimes(sequenceOf(numberInt(), space())), string(hello world!))", resultOne.lastParserName)
+            assertEquals("sequenceOf(oneOrMoreTimes(sequenceOf(number(Int), space())), string(hello world!))", resultOne.lastParserName)
             assertEquals(listOf(10, 15, 20, 25, 30, 35, 40, 45, 50, "hello world!"), resultOne.results)
             assertEquals(false, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
@@ -395,9 +456,9 @@ class ParserCombinatorsKtTest {
         fun shouldParseUntilEnd(){
             val input1 = BaseParser("10 15 20 25 30 35 40 45 50 ")
 
-            val parser = oneOrMoreTimes(sequenceOf(numberInt(), space()))
+            val parser = oneOrMoreTimes(sequenceOf(number(Int::class), space()))
             val resultOne = parser(input1)
-            assertEquals("oneOrMoreTimes(sequenceOf(numberInt(), space()))", resultOne.lastParserName)
+            assertEquals("oneOrMoreTimes(sequenceOf(number(Int), space()))", resultOne.lastParserName)
             assertEquals(listOf(10, 15, 20, 25, 30, 35, 40, 45, 50), resultOne.results)
             assertEquals(false, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
@@ -408,9 +469,9 @@ class ParserCombinatorsKtTest {
         fun shouldStopAtFailure(){
             val input1 = BaseParser("10 15 20  ")
 
-            val parser = oneOrMoreTimes(sequenceOf(numberInt(), space()))
+            val parser = oneOrMoreTimes(sequenceOf(number(Int::class), space()))
             val resultOne = parser(input1)
-            assertEquals("oneOrMoreTimes(sequenceOf(numberInt(), space()))", resultOne.lastParserName)
+            assertEquals("oneOrMoreTimes(sequenceOf(number(Int), space()))", resultOne.lastParserName)
             assertEquals(listOf(10, 15, 20), resultOne.results)
             assertEquals(true, resultOne.hasNext)
             assertEquals("Expected number but got ' '", resultOne.warning)
@@ -442,7 +503,7 @@ class ParserCombinatorsKtTest {
             val parser = oneOrMoreTimes(group(sequenceOf(anyLetter(), char('+'), anyLetter())))
             val resultOne = parser(input1)
             assertEquals("oneOrMoreTimes(group(sequenceOf(anyLetter(), char(+), anyLetter())))", resultOne.lastParserName)
-            assertEquals(listOf(listOf('a', '+', 'b'), listOf('z')), resultOne.results)
+            assertEquals(listOf(listOf('a', '+', 'b'), listOf('z', '+')), resultOne.results)
             assertEquals(true, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
             assertEquals(null, resultOne.error)
@@ -539,9 +600,9 @@ class ParserCombinatorsKtTest {
         fun shouldParseClassCorrectly(){
             val input1 = BaseParser("hello 10")
 
-            val parser = toClass(sequenceOf(anyLengthString(), space(), numberInt()), StringIntClass::class)
+            val parser = toClass(sequenceOf(anyLengthString(), space(), number(Int::class)), StringIntClass::class)
             val resultOne = parser(input1)
-            assertEquals("toClass(StringIntClass, sequenceOf(anyLengthString(), space(), numberInt()))", resultOne.lastParserName)
+            assertEquals("toClass(StringIntClass, sequenceOf(anyLengthString(), space(), number(Int)))", resultOne.lastParserName)
             assertEquals(listOf(StringIntClass("hello", 10)), resultOne.results)
             assertEquals(false, resultOne.hasNext)
             assertEquals(false, resultOne.hasError)
@@ -552,9 +613,9 @@ class ParserCombinatorsKtTest {
         fun shouldFailIfTypesDoNotMatch(){
             val input1 = BaseParser("10 hello")
 
-            val parser = toClass(sequenceOf(numberInt(), space(), anyLengthString()), StringIntClass::class)
+            val parser = toClass(sequenceOf(number(Int::class), space(), anyLengthString()), StringIntClass::class)
             val resultOne = parser(input1)
-            assertEquals("toClass(StringIntClass, sequenceOf(numberInt(), space(), anyLengthString()))", resultOne.lastParserName)
+            assertEquals("toClass(StringIntClass, sequenceOf(number(Int), space(), anyLengthString()))", resultOne.lastParserName)
             assertEquals(false, resultOne.hasNext)
             assertEquals(true, resultOne.hasError)
             assertEquals("Expected parameter of type kotlin.String but got: Int", resultOne.error)
@@ -564,9 +625,9 @@ class ParserCombinatorsKtTest {
         fun shouldFailIfNotEnoughArgs(){
             val input1 = BaseParser("10")
 
-            val parser = toClass(sequenceOf(numberInt()), StringIntClass::class)
+            val parser = toClass(sequenceOf(number(Int::class)), StringIntClass::class)
             val resultOne = parser(input1)
-            assertEquals("toClass(StringIntClass, sequenceOf(numberInt()))", resultOne.lastParserName)
+            assertEquals("toClass(StringIntClass, sequenceOf(number(Int)))", resultOne.lastParserName)
             assertEquals(false, resultOne.hasNext)
             assertEquals(true, resultOne.hasError)
             assertEquals("Expected parser results to contain 2 results but contained: 1", resultOne.error)

@@ -2,8 +2,10 @@ package parserCombinators
 
 import com.squareup.kotlinpoet.asTypeName
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSupertypeOf
+import kotlin.reflect.jvm.javaConstructor
 
 typealias ParserFn = (BaseParser) -> BaseParser
 
@@ -62,8 +64,10 @@ fun newLine(): ParserFn {
                 return@with innerParser
             }
             val peekChar = innerParser.peekChar()
-            if(peekChar == '\n'){
+            if(peekChar == '\n' && nextChar == '\r'){
                 innerParser = innerParser.advance(1)
+            } else if(nextChar == '\r'){
+                innerParser.error = "Expected '\\n' but received '$peekChar'"
             }
             return@with innerParser;
         }
@@ -84,54 +88,46 @@ fun optional(parserFn: ParserFn): ParserFn {
     }, "optional()")
 }
 
-fun numberInt(): ParserFn {
+fun <T : Number> number(size: KClass<T>): ParserFn {
+    fun isValidNumber( char: Char?, index: Int): Boolean {
+        return (char?.isDigit() == true) ||
+                (index == 0 && char == '-') ||
+                ((size == Float::class || size == Double::class) && char == '.' && index != 0 )
+    }
+
     return newParser({ parser ->
         val bufferNum = StringBuilder()
         var currentChar: Char?
         var newParser = parser
+        var index = 0
 
         do {
             currentChar = newParser.peekChar()
-            if(currentChar?.isDigit() == true){
+            if (isValidNumber(currentChar, index)) {
                 bufferNum.append(currentChar)
                 newParser = newParser.advance(1)
                 currentChar = newParser.peekChar()
+                index += 1
             }
-        } while(currentChar?.isDigit() == true)
+        } while (isValidNumber(currentChar, index))
 
-        if(bufferNum.isEmpty()){
+        if (bufferNum.isEmpty()) {
             newParser.error = "Expected number but got '$currentChar'"
         } else {
-            newParser.results.add(bufferNum.toString().toInt())
+            newParser.results.add(when(size){
+                Int::class -> bufferNum.toString().toInt()
+                Double::class -> bufferNum.toString().toDouble()
+                Float::class -> bufferNum.toString().toFloat()
+                Long::class -> bufferNum.toString().toLong()
+                else -> {
+                    newParser.error = "Unsupported size type ${size.simpleName}"
+                    return@newParser newParser
+                }
+            })
         }
 
         newParser
-    }, "numberInt()")
-}
-
-fun numberLong(): ParserFn {
-    return newParser({ parser ->
-        val bufferNum = StringBuilder()
-        var currentChar: Char?
-        var newParser = parser
-
-        do {
-            currentChar = newParser.peekChar()
-            if(currentChar?.isDigit() == true){
-                bufferNum.append(currentChar)
-                newParser = newParser.advance(1)
-                currentChar = newParser.peekChar()
-            }
-        } while(currentChar?.isDigit() == true)
-
-        if(bufferNum.isEmpty()){
-            newParser.error = "Expected number but got '$currentChar'"
-        } else {
-            newParser.results.add(bufferNum.toString().toLong())
-        }
-
-        newParser
-    }, "numberLong()")
+    }, "number(${size.simpleName})")
 }
 
 fun group(vararg parsers: ParserFn): ParserFn {
@@ -236,8 +232,9 @@ fun oneOf(vararg parsers: ParserFn): ParserFn {
         val errorStates: MutableList<BaseParser> = mutableListOf()
         val passedStates: MutableList<BaseParser> = mutableListOf()
 
+        var startingParser = parser
         for(parserFn in parsers){
-            val possibleNextState = parserFn(parser)
+            val possibleNextState = parserFn(parser.copy())
             if(!possibleNextState.hasError){
                 passedStates.add(possibleNextState)
             } else {
@@ -296,6 +293,24 @@ fun char(toMatch: Char, shouldCapture: Boolean = true): ParserFn {
 }
 
 fun toClass(innerParse: ParserFn, instanceClass: KClass<*>): ParserFn {
+    fun checkArgs(constructorParams: List<KParameter>, resultArgs: List<Any>?, ignoreOptional: Boolean = false): Pair<Boolean, String?> {
+        val modifiedConstructorParams = if(ignoreOptional) constructorParams.filter { !it.isOptional } else constructorParams
+        if(resultArgs == null){
+            return Pair(false, "Expected result args but got: null")
+        }
+
+        if(resultArgs.size < modifiedConstructorParams.size){
+            return Pair(false, "Expected parser results to contain ${constructorParams.size} results but contained: ${resultArgs.size}")
+        }
+
+        for(paramIdx in modifiedConstructorParams.indices){
+            if(!modifiedConstructorParams[paramIdx].type.isSupertypeOf(resultArgs?.get(paramIdx)!!::class.createType())){
+                return Pair(false, "Expected parameter of type ${modifiedConstructorParams[paramIdx].type.asTypeName()} but got: ${resultArgs[paramIdx]::class.simpleName}")
+            }
+        }
+        return Pair(true, null)
+    }
+
     return newParser({parser ->
         val newParser = innerParse(parser)
         newParser.lastParserName = "toClass(${instanceClass.simpleName}, ${newParser.lastParserName})"
@@ -309,27 +324,41 @@ fun toClass(innerParse: ParserFn, instanceClass: KClass<*>): ParserFn {
         }
 
         val constructorFn = instanceClass.constructors.first()
-        val numOfParams = constructorFn.parameters.size
 
-        if(newParser.results.size < numOfParams){
-            newParser.error = "Expected parser results to contain $numOfParams results but contained: ${newParser.results.size}"
+        val optionalSize = constructorFn.parameters.filter { !it.isOptional }.size
+        val nonOptionalSize = constructorFn.parameters.size
+
+        val withoutOptional = checkArgs(constructorFn.parameters, newParser.copy().sliceLast(nonOptionalSize))
+        val withOptional = checkArgs(constructorFn.parameters, newParser.copy().sliceLast(optionalSize), true)
+        var ignoreOptional = false;
+
+        var resultArgs: List<Any>? = null
+        if(withoutOptional.first){
+            resultArgs = newParser.sliceLast(nonOptionalSize)
+        } else if(withOptional.first) {
+            ignoreOptional = true
+            resultArgs = newParser.sliceLast(optionalSize)
+        } else {
+            newParser.error = "Unable to match needed constructor arguments: (Optional: ${withoutOptional.second}, Without Optional: ${withOptional.second})"
             return@newParser newParser
         }
-        val resultArgs = newParser.sliceLast(numOfParams)
+
         if(resultArgs == null){
-            newParser.error = "Expected list of params but got: null"
             return@newParser newParser
-        }
-
-        for(paramIdx in 0 until numOfParams){
-            if(!constructorFn.parameters[paramIdx].type.isSupertypeOf(resultArgs[paramIdx]::class.createType())){
-                newParser.error = "Expected parameter of type ${constructorFn.parameters[paramIdx].type.asTypeName()} but got: ${resultArgs[paramIdx]::class.simpleName}"
-                return@newParser newParser
-            }
         }
 
         try {
-            val instance = constructorFn.call(*resultArgs.toTypedArray())
+            val parameterMap: MutableMap<KParameter, Any> = mutableMapOf()
+            var optionalArgsSoFar = 0
+            for(paramIdx in constructorFn.parameters.indices){
+                if((!constructorFn.parameters[paramIdx].isOptional && ignoreOptional) || !ignoreOptional){
+                    parameterMap[constructorFn.parameters[paramIdx]] = resultArgs[paramIdx-optionalArgsSoFar]
+                } else {
+                    optionalArgsSoFar += 1
+                }
+            }
+
+            val instance = constructorFn.callBy(parameterMap)
             newParser.results.add(instance)
         } catch(e: Exception) {
             newParser.error = "Exception occurred when constructing class: ${e.message}"

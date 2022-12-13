@@ -11,7 +11,7 @@ import runTimedPart
 @Suppress("unused")
 class Day1(): Day() {
     private fun parseInput(input: String): List<List<Int>> {
-        val parseTree = parseTillEnd(sequenceOf(group(oneOrMoreTimes(sequenceOf(numberInt(), optional(newLine())))), optional(newLine())))
+        val parseTree = parseTillEnd(sequenceOf(group(oneOrMoreTimes(sequenceOf(number(Int::class), optional(newLine())))), optional(newLine())))
         val result = parseTree(BaseParser(input))
         if(result.hasError){
             throw Error(result.error)

@@ -12,12 +12,16 @@ fun checkWithMessage(actual: Any, expected: Any) {
 
 
 
-fun <T> runTimedPart(partNum: Int, part: (input: T) -> Any, input: T) {
+fun <T> runTimedPart(partNum: Int, part: (input: T) -> Any, input: T, shouldPrintOutput: Boolean = true) {
     val result: Any;
     val elapsed = measureNanoTime {
         result = part(input)
     }
-    println("Part $partNum: $result (elapsed: ${elapsed/1e+6}ms)")
+    if(shouldPrintOutput){
+        println("Part $partNum: $result (elapsed: ${elapsed/1e+6}ms)")
+    } else {
+        println("Part $partNum timing: (elapsed: ${elapsed/1e+6}ms)")
+    }
 }
 
 /**
