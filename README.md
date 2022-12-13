@@ -25,3 +25,5 @@ where you replace the `?` with the day you want to generate the boilerplate for.
  | 7   | ⭐⭐        |
  | 8   | ⭐⭐        |
  | 9   | ⭐⭐        |
+| 10  | ⭐⭐        |
+| 11  | ⭐⭐        |
